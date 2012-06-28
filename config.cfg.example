@@ -43,6 +43,16 @@ DupiConfig['items'] = [
     ]
 
 #########################################
+# PGSQL support:
+#########################################
+
+# you could backup postgreSQL db. One of them or all.
+
+DupiConfig['items'].append(
+    PSQLBackupTarget( root = '/mnt/dupinanny', destination = 'rsync://@my_host::my_lvm_backup_path', dbname = 'db_name', dbtmpdir = '/tmp/dupinannydb', shortFilenames = True )
+    )
+
+#########################################
 # LVM support (EXPERIMENTAL):
 #########################################
 

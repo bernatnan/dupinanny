@@ -115,7 +115,7 @@ class CheckMount( object ):
                 raise Exception( 'CheckMount: %s is not mounted' % self.directory )
 
 class BackupTarget( object ):
-    def __init__( self, root, destination, exclude = [], shortFilenames = False , include = [] ):
+    def __init__( self, root, destination, exclude = [], shortFilenames = False, include = [] ):
         self.root = root
         self.destination = destination
         self.exclude = exclude
@@ -243,6 +243,48 @@ class BackupTarget( object ):
         cmd.append( self.destination )
         print( repr( cmd ) )
         subprocess.check_call( cmd )
+
+class PSQLBackupTarget( BackupTarget ):
+    def __init__( self, root, destination, dbname = all, dbtmpdir= '/tmp/dupinannydb/', exclude = [], shortFilenames = False, ):
+        BackupTarget.__init__( self, root, destination, exclude = exclude, shortFilenames = shortFilenames )
+        self.dbname = dbname
+        self.dbtmpdir = dbtmpdir
+
+    # def CreateDBBackup( self, dbname ):
+
+    # def Run( self, recursed = False ):
+    #
+    #
+    def split_backup(filename):
+        dirname = tempfile.mkdtemp()
+        print "DIRECTORY: ", dirname
+        f = open(filename)
+        newfile = None
+        newfilename = None
+        count = 0
+        for line in f:
+            if not newfile or line.startswith('CREATE TABLE'):
+                if newfile:
+                    newfile.close()
+                newfilename = os.path.join(dirname, '%05d.split.dump' % count)
+                newfile = open(newfilename, 'a')
+                count += 1
+            newfile.write(line)
+        if newfile:
+            newfile.close()
+        f.close()
+        return dirname
+
+    def join_backup(dirname):
+        files = sorted(glob.glob(os.path.join(dirname, '*.split.dump')))
+        newfilename = tempfile.mkstemp()[1]
+        print "FILENAME: ", newfilename
+        newfile = open(newfilename, 'a')
+        for filename in files:
+            currentfile = open(filename, 'r')
+            for line in currentfile:
+                newfile.write(line)
+        newfile.close()
 
 class LVMBackupTarget( BackupTarget ):
     def __init__( self, root, destination, lvmpath, snapsize, snapshot_name, snapshot_path, exclude = [], shortFilenames = False ):
