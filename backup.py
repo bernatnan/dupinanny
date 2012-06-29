@@ -22,6 +22,7 @@ from __future__ import with_statement
 from contextlib import contextmanager
 
 import sys, commands, os, subprocess, pickle, datetime
+import tempfile
 
 import config, lock
 
@@ -259,23 +260,27 @@ class BackupTarget(object):
         subprocess.check_call(cmd)
 
 class PSQLBackupTarget(BackupTarget):
-    def __init__(self, root, destination, dbname=all, 
-            dbtmpdir='/tmp/dupinannydb/', exclude=None, shortFilenames=False):
+    def __init__(self, root, destination, dbname='all', exclude=None, 
+            shortFilenames=False):
         if exclude is None:
             exclude = []
         BackupTarget.__init__(self, root, destination, exclude=exclude, 
             shortFilenames=shortFilenames)
         self.dbname = dbname
-        self.dbtmpdir = dbtmpdir
 
     # def CreateDBBackup(self, dbname):
 
-    # def Run(self, recursed=False):
-    #
-    #
-    def split_backup(filename):
-        dirname = tempfile.mkdtemp()
-        print "DIRECTORY: ", dirname
+    def Run(self, recursed=False):
+        fd, filename = tempfile.mkstemp()
+        # TODO: Should to split in a pipe
+        cmd = ['pg_dump', '-f', filename, self.dbname]
+        subprocess.check_call(cmd)
+        dirname = self.split_backup(filename, self.root)
+        BackupTarget.Run(self, recursed=recursed)
+        os.unlink(filename)
+    
+    
+    def split_backup(self, filename, dirname):
         f = open(filename)
         newfile = None
         newfilename = None
@@ -291,12 +296,10 @@ class PSQLBackupTarget(BackupTarget):
         if newfile:
             newfile.close()
         f.close()
-        return dirname
 
     def join_backup(dirname):
         files = sorted(glob.glob(os.path.join(dirname, '*.split.dump')))
         newfilename = tempfile.mkstemp()[1]
-        print "FILENAME: ", newfilename
         newfile = open(newfilename, 'a')
         for filename in files:
             currentfile = open(filename, 'r')
