@@ -23,7 +23,7 @@ import os, re
 from optparse import OptionParser
 
 class ConfigBase:
-    def __init__( self, dupi ):
+    def __init__(self, dupi):
         self.dupi = dupi
         self.config = dupi['config']
         
@@ -48,58 +48,69 @@ class ConfigBase:
         except:
             pass        
 
-    def commandLineOverrides( self, options ):
-        if ( options.dry_run ):
+    def commandLineOverrides(self, options):
+        if (options.dry_run):
             self.dry_run = options.dry_run
 
         self.cleanup = options.cleanup
-        if ( self.cleanup ):
+        if (self.cleanup):
             self.dry_run = True
 
         self.force_remove_older = False
-        if ( not options.remove_older is None ):
+        if (not options.remove_older is None):
             self.remove_older = options.remove_older
-            print '*** command line override for remove_older: %d ***' % self.remove_older
+            print ('*** command line override for remove_older: %d ***' % 
+                self.remove_older)
             self.force_remove_older = True
             self.dry_run = True
 
-        if ( self.dry_run ):
+        if (self.dry_run):
             print '*** running in test mode ***'
 
         self.full = options.full
-        if ( self.full ):
+        if (self.full):
             print '*** FLAGING FULL BACKUP ***'
 
-def readConfig( cmdargs ):
+def readConfig(cmdargs):
 
     parser = OptionParser()
-    parser.add_option( '--dry-run', action = 'store_true', dest = 'dry_run', help = 'show commands, do not execute except collection-status' )
-    parser.add_option( '--cleanup', action = 'store_true', dest = 'cleanup', help = 'cleanup only, implies --dry-run' )
-    parser.add_option( '--remove-older', action = 'store', type = 'int', dest = 'remove_older', default = None, help = 'run remove_old only, with the given value. implies --dry-run (set the value in the config to customize for each run and do other operations)' )
-    parser.add_option( '--config', action = 'store', type = 'string', dest = 'configFile', default = 'config.cfg.example', help = 'use this config file' )
-    parser.add_option( '--full', action = 'store_true', dest = 'full', help = 'force a full backup. will retry for each backup target if necessary until full backups are done' )
-    ( options, args ) = parser.parse_args( cmdargs )
+    parser.add_option('--dry-run', action='store_true', dest='dry_run', 
+        help='show commands, do not execute except collection-status')
+    parser.add_option('--cleanup', action='store_true', dest='cleanup', 
+        help = 'cleanup only, implies --dry-run')
+    parser.add_option('--remove-older', action='store', type='int', 
+        dest='remove_older', default=None, help='run remove_old only, with the '
+        'given value. implies --dry-run (set the value in the config to '
+        'customize for each run and do other operations)')
+    parser.add_option('--config', action='store', type='string', 
+        dest='configFile', default='config.cfg.example', 
+        help='use this config file')
+    parser.add_option('--full', action='store_true', dest='full', help='force '
+        'a full backup. will retry for each backup target if necessary until '
+        'full backups are done')
+    (options, args) = parser.parse_args(cmdargs)
     
     globals = {}
     locals = {}
     try:
-        execfile( options.configFile, globals, locals )
+        execfile(options.configFile, globals, locals)
     except:
-        print 'exception raised while reading config file %s' % options.configFile
+        print ('exception raised while reading config file %s' % 
+            options.configFile)
         raise
-    if ( not locals.has_key( 'DupiConfig' ) ):
+    if (not locals.has_key('DupiConfig')):
         raise 'DupiConfig dictionary was not defined'
     DupiConfig = locals['DupiConfig']
     
     # setup default backup class if needed
-    if ( not DupiConfig.has_key( 'backup' ) ):
+    if (not DupiConfig.has_key('backup')):
         from backup import Backup
-        DupiConfig['backup'] = Backup( DupiConfig )
+        DupiConfig['backup'] = Backup(DupiConfig)
 
-    DupiConfig['backup'].commandLineOverrides( options )
+    DupiConfig['backup'].commandLineOverrides(options)
     
     return DupiConfig
 
-if ( __name__ == '__main__' ):
+if __name__ == '__main__':
     readConfig()
 
