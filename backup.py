@@ -50,6 +50,17 @@ class Backup(config.ConfigBase):
     def ProcessBackups(self):
         backup_time_filename = os.path.join(os.path.dirname(self.lockfile), 
             'dupinnany_backup_info.pickle')
+
+        if self.item:
+            keep = None
+            for item in self.dupi['items']:
+                if item.name == self.item:
+                    keep = item
+                    break
+            self.dupi['items'] = []
+            if keep:
+                self.dupi['items'].append(keep)
+
         if (not self.dry_run and self.config.has_key('backup_every') and 
                 os.path.exists(backup_time_filename)):
             # check last backup information, early out if we haven't reached that point yet
@@ -120,12 +131,14 @@ class CheckMount(object):
                 raise Exception('CheckMount: %s is not mounted' % self.directory)
 
 class BackupTarget(object):
-    def __init__(self, root, destination, exclude=None, shortFilenames=False, 
+    def __init__(self, name, root, destination, exclude=None, shortFilenames=False, 
             include=None):
         if exclude is None:
             exclude = []
         if include is None:
             include = []
+        self.name = name
+        self.type = 'path'
         self.root = root
         self.destination = destination
         self.exclude = exclude
@@ -260,12 +273,13 @@ class BackupTarget(object):
         subprocess.check_call(cmd)
 
 class PSQLBackupTarget(BackupTarget):
-    def __init__(self, root, destination, dbname='all', exclude=None, 
+    def __init__(self, name, root, destination, dbname='all', exclude=None, 
             shortFilenames=False):
         if exclude is None:
             exclude = []
-        BackupTarget.__init__(self, root, destination, exclude=exclude, 
+        BackupTarget.__init__(self, name, root, destination, exclude=exclude, 
             shortFilenames=shortFilenames)
+        self.type = 'postgresql'
         self.dbname = dbname
 
     # def CreateDBBackup(self, dbname):
@@ -308,11 +322,11 @@ class PSQLBackupTarget(BackupTarget):
         newfile.close()
 
 class LVMBackupTarget(BackupTarget):
-    def __init__(self, root, destination, lvmpath, snapsize, snapshot_name, 
-            snapshot_path, exclude=None, shortFilenames=False):
+    def __init__(self, name, root, destination, lvmpath, snapsize, 
+            snapshot_name, snapshot_path, exclude=None, shortFilenames=False):
         if exclude is None:
             exclude = []
-        BackupTarget.__init__(self, root, destination, exclude=exclude, 
+        BackupTarget.__init__(self, name, root, destination, exclude=exclude,
             shortFilenames=shortFilenames)
         self.lvmpath = lvmpath
         self.snapsize = snapsize

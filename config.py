@@ -18,7 +18,7 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ##########################################################################
 
-import os, re
+import os, re, sys
 
 from optparse import OptionParser
 
@@ -35,6 +35,8 @@ class ConfigBase:
             self.dry_run = self.config['dry_run']
         except:
             pass
+
+        self.item = None
 
         self.duplicity = 'duplicity'
         try:
@@ -71,6 +73,9 @@ class ConfigBase:
         if (self.full):
             print '*** FLAGING FULL BACKUP ***'
 
+        if (options.item):
+            self.item = options.item
+
 def readConfig(cmdargs):
 
     parser = OptionParser()
@@ -88,6 +93,11 @@ def readConfig(cmdargs):
     parser.add_option('--full', action='store_true', dest='full', help='force '
         'a full backup. will retry for each backup target if necessary until '
         'full backups are done')
+    parser.add_option('--list', action='store_true', dest='list',
+        help='show the list of available backups targets')
+    parser.add_option('--item', action='store', type='string',
+        dest='item', default=None, help='backup item to execute. Leave '
+        'to backup all items.')
     (options, args) = parser.parse_args(cmdargs)
     
     globals = {}
@@ -101,6 +111,39 @@ def readConfig(cmdargs):
     if (not locals.has_key('DupiConfig')):
         raise 'DupiConfig dictionary was not defined'
     DupiConfig = locals['DupiConfig']
+    
+    if options.list:
+        attrsname = {
+            'name': 'Item', 
+            'type': 'Type',
+            'root': 'Path', 
+            'destination': 'Destination',
+            }
+        maxattrs = {}
+        for attr in ['name', 'type', 'root', 'destination']:
+            maxattrs[attr] = max([len(getattr(x, attr)) for x in 
+                    DupiConfig['items']])
+            maxattrs[attr] = max(maxattrs[attr], len(attrsname[attr]))
+        print '%s   %s   %s   %s' % (
+            attrsname['name'].ljust(maxattrs['name']),
+            attrsname['type'].ljust(maxattrs['type']), 
+            attrsname['root'].ljust(maxattrs['root']), 
+            attrsname['destination'].ljust(maxattrs['destination']),
+            )
+        print '%s   %s   %s   %s' % (
+            '-' * maxattrs['name'],
+            '-' * maxattrs['type'],
+            '-' * maxattrs['root'],
+            '-' * maxattrs['destination'],
+            )
+        for item in DupiConfig['items']:
+            print '%s   %s   %s   %s' % (
+                item.name.ljust(maxattrs['name']),
+                item.type.ljust(maxattrs['type']),
+                item.root.ljust(maxattrs['root']), 
+                item.destination.ljust(maxattrs['destination']),
+                )
+        sys.exit(0)
     
     # setup default backup class if needed
     if (not DupiConfig.has_key('backup')):
