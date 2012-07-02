@@ -147,7 +147,7 @@ def readConfig(cmdargs):
     
     # setup default backup class if needed
     if (not DupiConfig.has_key('backup')):
-        from backup import Backup
+        from dupinanny import Backup
         DupiConfig['backup'] = Backup(DupiConfig)
 
     DupiConfig['backup'].commandLineOverrides(options)

@@ -35,11 +35,11 @@ destination_root = 'rsync://@my_host::my_backup_path'
 # destination_root = 's3+http://my_bucket_name'
 # don't use --s3-use-new-style
 
-from backup import BackupTarget
+from dupinanny import BackupTarget
 DupiConfig['items'] = [
     BackupTarget('root', root='/', destination=destination_root, exclude=['/usr/local/games'], shortFilenames=True),
     # (dupinanny calls duplicity with --exclude-other-filesystems, so you may need to add more)
-    BackupTarget('var' root='/var', destination='%s/var' % destination_root, shortFilenames=True),
+    BackupTarget('var', root='/var', destination='%s/var' % destination_root, shortFilenames=True),
    ]
 
 #########################################
@@ -48,8 +48,9 @@ DupiConfig['items'] = [
 
 # you could backup postgreSQL db. One of them or all.
 
+from dupinanny import PSQLBackupTarget
 DupiConfig['items'].append(
-    PSQLBackupTarget('db_name', root='/mnt/dupinanny', destination='rsync://@my_host::my_lvm_backup_path', dbname='db_name', dbtmpdir='/tmp/dupinannydb', shortFilenames=True)
+    PSQLBackupTarget('db_name', root='/mnt/dupinanny', destination='rsync://@my_host::my_pgsql_backup_path', dbname='db_name', shortFilenames=True)
    )
 
 #########################################
@@ -60,6 +61,7 @@ DupiConfig['items'].append(
 # use LVMBackupTarget for that purpose, you need a path to mount the snapshot to, and that's what you use as the root of the backup
 # you also need to pass the name of the snapshot LVM volume that is created, the LVM path for it, and it's size
 
+from dupinanny import LVMBackupTarget
 DupiConfig['items'].append(
     LVMBackupTarget('lvm', root='/mnt/dupinanny', destination='rsync://@my_host::my_lvm_backup_path', lvmpath='/dev/lvmvolume/volumename', snapsize='20G', snapshot_name='dupinanny', snapshot_path='/dev/lvmvolume/dupinanny')
    )
@@ -70,12 +72,12 @@ DupiConfig['items'].append(
 
 # define your backup class if you need to override it
 # by default the system will instanciate the main class for you
-#from backup import Backup
+#from dupinanny import Backup
 #DupiConfig['backup'] = Backup(DupiConfig)
 
 # adding pre-backup steps - write your own class, or use some of the provided utilities
 # for instance, this checks that a particular filesystem is mounted
-#from backup import CheckMount
+#from dupinanny import CheckMount
 #DupiConfig['prepare'] = [CheckMount('/mnt/backup')]
 
 # adding post-backup steps - write your own class, or use some of the provided utilities

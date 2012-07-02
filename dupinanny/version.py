@@ -1,0 +1,5 @@
+PACKAGE = "dupinanny"
+VERSION = "0.9"
+LICENSE = "GPL-3"
+WEBSITE = "https://github.com/TTimo/dupinanny"
+DOWNLOAD = "https://github.com/TTimo/dupinanny"
