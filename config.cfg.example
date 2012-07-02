@@ -37,9 +37,9 @@ destination_root = 'rsync://@my_host::my_backup_path'
 
 from backup import BackupTarget
 DupiConfig['items'] = [
-    BackupTarget(root='/', destination=destination_root, exclude=['/usr/local/games'], shortFilenames=True),
+    BackupTarget('root', root='/', destination=destination_root, exclude=['/usr/local/games'], shortFilenames=True),
     # (dupinanny calls duplicity with --exclude-other-filesystems, so you may need to add more)
-    BackupTarget(root='/var', destination='%s/var' % destination_root, shortFilenames=True),
+    BackupTarget('var' root='/var', destination='%s/var' % destination_root, shortFilenames=True),
    ]
 
 #########################################
@@ -49,7 +49,7 @@ DupiConfig['items'] = [
 # you could backup postgreSQL db. One of them or all.
 
 DupiConfig['items'].append(
-    PSQLBackupTarget(root='/mnt/dupinanny', destination='rsync://@my_host::my_lvm_backup_path', dbname='db_name', dbtmpdir='/tmp/dupinannydb', shortFilenames=True)
+    PSQLBackupTarget('db_name', root='/mnt/dupinanny', destination='rsync://@my_host::my_lvm_backup_path', dbname='db_name', dbtmpdir='/tmp/dupinannydb', shortFilenames=True)
    )
 
 #########################################
@@ -61,7 +61,7 @@ DupiConfig['items'].append(
 # you also need to pass the name of the snapshot LVM volume that is created, the LVM path for it, and it's size
 
 DupiConfig['items'].append(
-    LVMBackupTarget(root='/mnt/dupinanny', destination='rsync://@my_host::my_lvm_backup_path', lvmpath='/dev/lvmvolume/volumename', snapsize='20G', snapshot_name='dupinanny', snapshot_path='/dev/lvmvolume/dupinanny')
+    LVMBackupTarget('lvm', root='/mnt/dupinanny', destination='rsync://@my_host::my_lvm_backup_path', lvmpath='/dev/lvmvolume/volumename', snapsize='20G', snapshot_name='dupinanny', snapshot_path='/dev/lvmvolume/dupinanny')
    )
 
 #########################################
