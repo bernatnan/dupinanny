@@ -119,14 +119,14 @@ class CheckMount(object):
     def Prepare(self, backup):
         print 'CheckMount.Prepare'
         cmd = 'cat /etc/mtab | grep "%s"' % self.directory
-        print cmd
+        #print cmd
         (status, output) = commands.getstatusoutput(cmd)
         if (status != 0):
-            print repr((status, output))
+            #print repr((status, output))
             cmd = 'mount "%s"' % self.directory
-            print cmd
+            #print cmd
             (status, output) = commands.getstatusoutput(cmd)
-            print repr((status, output))
+            #print repr((status, output))
             if (status != 0):
                 raise Exception('CheckMount: %s is not mounted' % self.directory)
 
@@ -204,7 +204,7 @@ class BackupTarget(object):
         cmd += option_string
         cmd.append(self.root)
         cmd.append(self.destination)
-        print repr(cmd)
+        #print repr(cmd)
 
         if (not self.backup.dry_run):
             p = subprocess.Popen(cmd, stdin=None, stdout=subprocess.PIPE, 
@@ -221,7 +221,7 @@ class BackupTarget(object):
                                 'specified') != -1):
                         failed_incremental = True
                 ret = p.poll()
-                print repr(ret)
+                #print repr(ret)
             if (ret != 0):
                 if (failed_incremental):
                     print 'no incremental found, forcing full backup'
@@ -247,7 +247,7 @@ class BackupTarget(object):
         cmd += option_string
         cmd.append('--force')
         cmd.append(self.destination)
-        print(repr(cmd))
+        #print(repr(cmd))
         if (self.backup.cleanup or not self.backup.dry_run):
             subprocess.check_call(cmd)
 
@@ -256,7 +256,7 @@ class BackupTarget(object):
                 self.backup.remove_older, '--force']
             cmd += option_string
             cmd.append(self.destination)
-            print(repr(cmd))
+            #print(repr(cmd))
             if (self.backup.force_remove_older or not self.backup.dry_run):
                 subprocess.check_call(cmd)
 
@@ -269,7 +269,7 @@ class BackupTarget(object):
         cmd = [self.backup.duplicity, 'collection-status']
         cmd += option_string
         cmd.append(self.destination)
-        print(repr(cmd))
+        #print(repr(cmd))
         subprocess.check_call(cmd)
 
 class PSQLBackupTarget(BackupTarget):
@@ -289,6 +289,11 @@ class PSQLBackupTarget(BackupTarget):
         # TODO: Should to split in a pipe
         cmd = ['pg_dump', '-f', filename, self.dbname]
         subprocess.check_call(cmd)
+        # remove all files in backup root directory
+        for the_file in os.listdir(self.root):
+            path = os.path.join(self.root, the_file)
+            if os.path.isfile(path):
+                os.unlink(path)
         dirname = self.split_backup(filename, self.root)
         BackupTarget.Run(self, recursed=recursed)
         os.unlink(filename)
@@ -343,10 +348,10 @@ class LVMBackupTarget(BackupTarget):
             # 'try again with a full backup'
             cmd = ['lvcreate', '-s', '-L', self.snapsize, '-n', 
                 self.snapshot_name, self.lvmpath]
-            print cmd
+            #print cmd
             subprocess.check_call(cmd)
             cmd = ['mount', '-t', 'auto', self.snapshot_path, self.root]
-            print cmd
+            #print cmd
             subprocess.check_call(cmd)
         try:
             BackupTarget.Run(self, recursed=recursed)
@@ -357,10 +362,10 @@ class LVMBackupTarget(BackupTarget):
                 # release snapshot - making sure to do that in a cleanup 
                 # handler so we release the snap no matter what
                 cmd = ['umount', self.root]
-                print cmd
+                #print cmd
                 subprocess.check_call(cmd)
                 cmd = ['lvremove', '-f', self.snapshot_path]
-                print cmd
+                #print cmd
                 subprocess.check_call(cmd)
 
 if __name__ == '__main__':
